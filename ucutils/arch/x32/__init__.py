@@ -57,12 +57,13 @@ def get_capstone():
 
 
 # our own definitions, not standardized?
-GSINDEX = 10
-FSINDEX = 20
+GSINDEX = 1
+FSINDEX = 2
 
 
 def init_gdt(emu, gdt):
-    emu.gdtr = (0, gdt, 0x1000, 0x0)  # hardcoded GDT limit=0x1000
+    # unclear why `emu.gdtr = (...)` doesn't work
+    emu.reg_write(unicorn.x86_const.UC_X86_REG_GDTR, (0, gdt, 0x1000, 0x0))
 
 
 # via: https://github.com/unicorn-engine/unicorn/blob/master/tests/regress/x86_gdt.py
@@ -100,11 +101,10 @@ def set_gs(emu, gdt, addr, size):
         init_gdt(emu, gdt)
         set_gs(emu, gdt, 0x2000, 0x1000)
     '''
-    entry = create_gdt_entry(addr, size, A_PRESENT | A_DATA | A_DATA_WRITABLE | A_PRIV_3 | A_DIR_CON_BIT, F_PROT_32)
-    set_gdt_entry(emu, gdt, entry, GSINDEX)
 
-    selector = create_selector(GSINDEX, S_GDT | S_PRIV_3)
-    emu.reg_write(unicorn.x86_const.UC_X86_REG_GS, selector)
+    gdt_entry = create_gdt_entry(addr, size, A_PRESENT | A_DATA | A_DATA_WRITABLE | A_PRIV_3 | A_DIR_CON_BIT, F_PROT_32)
+    set_gdt_entry(emu, gdt, gdt_entry, GSINDEX)
+    emu.gs = create_selector(GSINDEX, S_GDT | S_PRIV_3)
 
 
 def get_gs(emu, gdt):
@@ -127,9 +127,7 @@ def set_fs(emu, gdt, addr, size):
     '''
     entry = create_gdt_entry(addr, size, A_PRESENT | A_DATA | A_DATA_WRITABLE | A_PRIV_3 | A_DIR_CON_BIT, F_PROT_32)
     set_gdt_entry(emu, gdt, entry, FSINDEX)
-
-    selector = create_selector(FSINDEX, S_GDT | S_PRIV_3)
-    emu.reg_write(unicorn.x86_const.UC_X86_REG_GS, selector)
+    emu.fs = create_selector(FSINDEX, S_GDT | S_PRIV_3)
 
 
 def get_fs(uc, gdt):

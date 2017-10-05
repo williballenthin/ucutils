@@ -8,7 +8,6 @@ import ucutils
 import ucutils.emu
 
 
-@pytest.mark.xfail
 def test_fs():
     emu = ucutils.emu.Emulator(unicorn.UC_ARCH_X86, unicorn.UC_MODE_32)
 
@@ -18,7 +17,7 @@ def test_fs():
 
     ucutils.arch.x32.init_gdt(emu, 0x2000)
     # TODO: this segfaults
-    #ucutils.arch.x32.set_fs(emu, 0x2000, 0x1000, 0x1000)
+    ucutils.arch.x32.set_fs(emu, gdt=0x2000, addr=0x1000, size=0x1000)
 
     code = binascii.unhexlify(b'64330D18000000')  # x86-32: xor ecx, dword ptr fs:[0x18]
     emu.mem_write(0x0, code)
@@ -29,7 +28,6 @@ def test_fs():
     assert emu.ecx == 0x41414141
 
 
-@pytest.mark.xfail
 def test_gs():
     emu = ucutils.emu.Emulator(unicorn.UC_ARCH_X86, unicorn.UC_MODE_32)
 
@@ -39,7 +37,7 @@ def test_gs():
 
     ucutils.arch.x32.init_gdt(emu, 0x2000)
     # TODO: this segfaults
-    #ucutils.arch.x32.set_gs(emu, 0x2000, 0x1000, 0x1000)
+    ucutils.arch.x32.set_gs(emu, 0x2000, 0x1000, 0x1000)
 
     code = binascii.unhexlify(b'65330d18000000')  # x86-32: xor ecx, dword ptr gs:[0x18]
     emu.mem_write(0x0, code)

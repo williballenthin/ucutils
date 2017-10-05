@@ -30,7 +30,7 @@ setup(
     entry_points={
         "console_scripts": [
         ]
-      },
+    },
 
     classifiers=[
         'License :: OSI Approved :: Apache Software License',

@@ -36,6 +36,17 @@ def align(value, alignment):
     return value + (alignment - (value % alignment))
 
 
+def get_page_base(addr):
+    '''
+    compute the starting address of the page that contains the given address.
+
+    example::
+
+        assert get_page_base(0x1002) == 0x1000
+    '''
+    return addr & 0b11111111111111111111000000000000
+
+
 def mem_hexdump(emu, addr, size):
     buf = emu.mem_read(addr, size)
     return hex(addr) + ':\n' + hexdump.hexdump(buf, result='return')

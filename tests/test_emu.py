@@ -128,9 +128,17 @@ def test_alloc():
     assert emu.mem.symbols[ucutils.HEAP_ADDR + 0x4000] == 'last'
 
 
-def test_map():
+def test_map_data():
     emu = ucutils.emu.Emulator(unicorn.UC_ARCH_X86, unicorn.UC_MODE_64)
 
     emu.mem.map_data(0x1000, b'aaaa', reason='Aaaaah!')
     assert emu.mem[0x1000:0x1000+0x4] == b'aaaa'
+    assert emu.mem.symbols[0x1000] == 'Aaaaah!'
+
+
+def test_map_region():
+    emu = ucutils.emu.Emulator(unicorn.UC_ARCH_X86, unicorn.UC_MODE_64)
+
+    emu.mem.map_region(0x1000, 0x1000, reason='Aaaaah!')
+    assert ucutils.probe_addr(emu, 0x1000) is True
     assert emu.mem.symbols[0x1000] == 'Aaaaah!'

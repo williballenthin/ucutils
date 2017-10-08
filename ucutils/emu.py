@@ -65,6 +65,10 @@ class MemoryAccessor(object):
         self.emu.mem_write(addr, data)
         self.symbols[addr] = reason
 
+    def map_region(self, addr, size, reason=''):
+        self.emu.mem_map(addr, ucutils.align(size, PAGE_SIZE))
+        self.symbols[addr] = reason
+
 
 class Emulator(unicorn.Uc):
     '''

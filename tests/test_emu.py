@@ -116,3 +116,13 @@ def test_context():
     assert emu.rax == 0x0
     assert emu.rbx == 0x0
     assert emu.pc == 0x0
+
+
+def test_alloc():
+    emu = ucutils.emu.Emulator(unicorn.UC_ARCH_X86, unicorn.UC_MODE_64)
+
+    assert emu.mem.alloc(0x1000) == ucutils.HEAP_ADDR
+    assert emu.mem.alloc(0x1) == ucutils.HEAP_ADDR + 0x1000
+    assert emu.mem.alloc(0x2000) == ucutils.HEAP_ADDR + 0x2000
+    assert emu.mem.alloc(0x2, reason='last') == ucutils.HEAP_ADDR + 0x4000
+    assert emu.mem.symbols[ucutils.HEAP_ADDR + 0x4000] == 'last'

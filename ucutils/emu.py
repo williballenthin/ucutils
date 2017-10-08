@@ -7,6 +7,7 @@ import collections
 
 import unicorn
 
+import ucutils
 import ucutils.arch
 
 
@@ -16,6 +17,9 @@ logger = logging.getLogger(__name__)
 class MemoryAccessor(object):
     def __init__(self, emu):
         self.emu = emu
+
+        # type: Map[int, str]
+        self.symbols = {}
 
     def __getitem__(self, key):
         if isinstance(key, slice):
@@ -29,6 +33,30 @@ class MemoryAccessor(object):
             return self.emu.mem_read(key.start, size)
         else:
             return super(MemoryAccessor, self).__getitem__(key)
+
+    def _find_heap_range(self, size):
+
+        num_pages = ucutils.align(size, 0x1000) // 0x1000
+
+        addr = ucutils.HEAP_ADDR
+        while True:
+            is_valid = True
+            for i in range(num_pages):
+                if ucutils.probe_addr(self.emu, addr + i * 0x1000):
+                    is_valid = False
+                    break
+
+            if not is_valid:
+                addr += 0x1000
+                continue
+            else:
+                return addr
+
+    def alloc(self, size, reason=''):
+        addr = self._find_heap_range(size)
+        self.emu.mem_map(addr, ucutils.align(size, 0x1000))
+        self.symbols[addr] = reason
+        return addr
 
 
 class Emulator(unicorn.Uc):

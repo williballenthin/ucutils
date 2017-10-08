@@ -22,6 +22,7 @@ setup(
     url='https://github.com/williballenthin/ucutils',
     license='Apache License 2.0',
     install_requires=[
+        'six',
         'hexdump',
         'unicorn',
         'capstone',

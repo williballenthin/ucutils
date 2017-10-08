@@ -5,6 +5,7 @@ import functools
 import contextlib
 import collections
 
+import six
 import unicorn
 
 import ucutils
@@ -32,6 +33,9 @@ class MemoryAccessor(object):
 
             size = key.stop - key.start
             return self.emu.mem_read(key.start, size)
+        elif isinstance(key, six.integer_types):
+            buf = self.emu.mem_read(key, 1)
+            return buf[0]
         else:
             return super(MemoryAccessor, self).__getitem__(key)
 

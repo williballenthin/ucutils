@@ -44,6 +44,13 @@ def test_read_mem_slice():
     assert emu.mem[0x0:0x2] == b'\x48\xC7'
 
 
+def test_read_mem_index():
+    emu = ucutils.emu.Emulator(unicorn.UC_ARCH_X86, unicorn.UC_MODE_64)
+    emu.mem_map(0x0, 0x1000)
+    emu.mem_write(0x0, CODE)
+    assert emu.mem[0x0] == 0x48
+
+
 def test_stepi():
     emu = ucutils.emu.Emulator(unicorn.UC_ARCH_X86, unicorn.UC_MODE_64)
     emu.mem_map(0x0, 0x1000)

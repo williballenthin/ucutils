@@ -54,9 +54,12 @@ def checkpoint(emu):
         assert 0x0 in cp['written_pages']
     '''
 
+    # we are a little clever with this dictionary.
+    # we'll yield it as the context manager block is entered, but it won't yet contain anything.
+    # since dictionaries are mutable, we can place results into it after the block exits.
     ret = {}
+    tracker = ucutils.checkpoint.MemWriteTracker()
     try:
-        tracker = ucutils.checkpoint.MemWriteTracker()
         with ucutils.emu.context(emu):
             with ucutils.emu.hook(emu, tracker):
                 yield ret

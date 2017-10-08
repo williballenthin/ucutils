@@ -9,6 +9,7 @@ import unicorn
 
 import ucutils
 import ucutils.arch
+from ucutils import PAGE_SIZE
 
 
 logger = logging.getLogger(__name__)
@@ -36,27 +37,33 @@ class MemoryAccessor(object):
 
     def _find_heap_range(self, size):
 
-        num_pages = ucutils.align(size, 0x1000) // 0x1000
+        num_pages = ucutils.align(size, PAGE_SIZE) // PAGE_SIZE
 
         addr = ucutils.HEAP_ADDR
         while True:
             is_valid = True
             for i in range(num_pages):
-                if ucutils.probe_addr(self.emu, addr + i * 0x1000):
+                if ucutils.probe_addr(self.emu, addr + i * PAGE_SIZE):
                     is_valid = False
                     break
 
             if not is_valid:
-                addr += 0x1000
+                addr += PAGE_SIZE
                 continue
             else:
                 return addr
 
     def alloc(self, size, reason=''):
         addr = self._find_heap_range(size)
-        self.emu.mem_map(addr, ucutils.align(size, 0x1000))
+        self.emu.mem_map(addr, ucutils.align(size, PAGE_SIZE))
         self.symbols[addr] = reason
         return addr
+
+    def map_data(self, addr, data, reason=''):
+        size = ucutils.align(len(data), PAGE_SIZE)
+        self.emu.mem_map(addr, size)
+        self.emu.mem_write(addr, data)
+        self.symbols[addr] = reason
 
 
 class Emulator(unicorn.Uc):

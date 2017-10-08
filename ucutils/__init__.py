@@ -10,6 +10,7 @@ import unicorn
 logger = logging.getLogger(__name__)
 
 
+PAGE_SIZE = 0x1000
 GS_SIZE = 0x1000
 GS_ADDR = 0x70000000
 HEAP_ADDR = 0x80000000

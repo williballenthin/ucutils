@@ -233,7 +233,7 @@ class CodeLogger(Hook):
 
     def hook(self, uc, address, size, user_data):
         buf = uc.mem_read(address, size)
-        op = next(self.dis.disasm(buf, address))
+        op = next(self.dis.disasm(bytes(buf), address))
         logger.debug("0x%x:\t%s\t%s" % (op.address, op.mnemonic, op.op_str))
 
 

@@ -167,3 +167,7 @@ class UnicornCli(cmd.Cmd):
         else:
             for addr, name in sorted(self.emu.symbols.items()):
                 print('0x%08x: %s' % (addr, name))
+
+    def do_maps(self, line):
+        for addr, name in sorted(self.emu.mem.symbols.items()):
+            print('0x%08x: %s' % (addr, name))

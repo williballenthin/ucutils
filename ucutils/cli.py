@@ -73,6 +73,10 @@ class UnicornCli(cmd.Cmd):
         'R8',  'R9',  'R10',  'R11',  'R12',  'R13',  'R14',  'R15',
     ]
 
+    X32GPREGS = [
+        'EAX', 'EBP', 'EBX', 'ECX', 'EDI', 'EDX', 'EIP', 'ESI', 'ESP',
+    ]
+
     def __init__(self, emu):
         super().__init__()
         self.emu = emu
@@ -91,8 +95,12 @@ class UnicornCli(cmd.Cmd):
         return True
 
     def do_reg(self, line):
-        for reg in self.X64GPREGS:
-            print('%s: 0x%08x' % (reg, getattr(self.emu, reg.lower())))
+        if self.emu.is64:
+            for reg in self.X64GPREGS:
+                print('%s: 0x%08x' % (reg, getattr(self.emu, reg.lower())))
+        else:
+            for reg in self.X32GPREGS:
+                print('%s: 0x%08x' % (reg, getattr(self.emu, reg.lower())))
 
     def parse_addr(self, line):
         if not line:

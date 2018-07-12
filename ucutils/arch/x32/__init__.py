@@ -80,6 +80,17 @@ def create_gdt_entry(base, limit, access, flags):
 def set_gdt_entry(emu, gdt, entry, index):
     emu.mem_write(gdt + 8 * index, entry)
 
+def read_gdt_entry(emu, gdt, index):
+    buf = emu.mem_read(gdt + 8 * index, 8)
+    entry = struct.unpack('<Q', buf)[0]
+    limit = entry & 0xffff
+    base = (entry >> 16) & 0xffffff
+    access = (entry >> 40) & 0xff
+    limit |= ((entry >> 48) & 0xf) << 16
+    flags = (entry >> 52) & 0xff
+    base |= ((entry >> 56) & 0xff) << 24
+    return base, limit, access, flags
+
 
 # via: https://github.com/unicorn-engine/unicorn/blob/master/tests/regress/x86_gdt.py
 def create_selector(idx, flags):
@@ -108,8 +119,8 @@ def set_gs(emu, gdt, addr, size):
 
 
 def get_gs(emu, gdt):
-    # TODO: need to learn to parse a GDT entry to handle this.
-    raise NotImplementedError()
+    base, limit, access, flags = read_gdt_entry(emu, gdt, GSINDEX)
+    return base
 
 
 def set_fs(emu, gdt, addr, size):
@@ -130,13 +141,9 @@ def set_fs(emu, gdt, addr, size):
     emu.fs = create_selector(FSINDEX, S_GDT | S_PRIV_3)
 
 
-def get_fs(uc, gdt):
-    # TODO: need to learn to parse a GDT entry to handle this.
-    raise NotImplementedError()
-
-
-def emit_ptr(emu, addr, value):
-    ucutils.emit_uint32(emu, addr, value)
+def get_fs(emu, gdt):
+    base, limit, access, flags = read_gdt_entry(emu, gdt, FSINDEX)
+    return base
 
 
 def get_pc(emu):

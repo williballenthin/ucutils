@@ -106,6 +106,9 @@ class Emulator(unicorn.Uc):
         # mapping from address to symbolic name
         self.symbols = {}
 
+        # public.
+        self.is64 = mode_const == unicorn.UC_MODE_64
+
         # mapping from hook type to list of handlers
         self._hooks = collections.defaultdict(lambda: [])
 

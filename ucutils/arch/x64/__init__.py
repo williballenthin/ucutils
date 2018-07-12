@@ -1,11 +1,15 @@
 #!/usr/bin/env python
 
 import struct
+import logging
 
 import unicorn
 import capstone
 
 import ucutils
+
+
+logger = logging.getLogger(__name__)
 
 
 # the unicorn constant for $pc

@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import struct
+import logging
 
 import unicorn
 import capstone
@@ -13,6 +14,9 @@ from ucutils.arch.x64 import C2S
 from ucutils.arch.x64 import S2U
 from ucutils.arch.x64 import S2C
 from ucutils.arch.x64 import REGS
+
+
+logger = logging.getLogger(__name__)
 
 
 # the unicorn constant for $pc

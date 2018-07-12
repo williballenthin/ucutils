@@ -87,6 +87,24 @@ def parse_utf16(emu, addr, length=0x100):
     return emu.mem_read(addr, length).partition(b'\x00\x00')[0].decode('utf-16le')
 
 
+def is_64(emu):
+    return emu._mode == unicorn.UC_MODE_64
+
+
+def emit_ptr(emu, addr, value):
+    if is_64(emu):
+        return emit_uint64(emu, addr, value)
+    else:
+        return emit_uint32(emu, addr, value)
+
+
+def parse_ptr(emu, addr):
+    if is_64(emu):
+        return parse_uint64(emu, addr)
+    else:
+        return parse_uint32(emu, addr)
+
+
 def probe_addr(emu, addr):
     try:
         emu.mem_read(addr, 0x1)

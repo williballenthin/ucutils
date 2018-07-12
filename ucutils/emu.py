@@ -142,6 +142,14 @@ class Emulator(unicorn.Uc):
     def stepi(self):
         self.arch.emu_stepi(self)
 
+    def push(self, val):
+        self.stack_pointer -= self.ptr_size
+        self.arch.emit_ptr(self, self.stack_pointer, val)
+
+    def pop(self):
+        val = self.arch.parse_ptr(self, self.stack_pointer)
+        self.stack_pointer += self.ptr_size
+
     def __getattr__(self, k):
         '''
         support reg access shortcut, like::

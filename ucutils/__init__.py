@@ -11,12 +11,14 @@ logger = logging.getLogger(__name__)
 
 
 PAGE_SIZE = 0x1000
-GS_SIZE = 0x1000
-GS_ADDR = 0x70000000
-HEAP_ADDR = 0x80000000
-STACK_ADDR = 0x69690000
-SCRATCH_ADDR = 0x60000000
-SCRATCH_SIZE = 0x1000
+SCRATCH_ADDR = 0x4000
+SCRATCH_SIZE = PAGE_SIZE
+STACK_ADDR   = 0x5000
+STACK_SIZE   = 0x3000
+CODE_ADDR    = 0x8000
+HEAP_ADDR    = 0x40000
+GS_SIZE      = PAGE_SIZE
+FS_SIZE      = PAGE_SIZE
 
 
 def align(value, alignment):
@@ -120,9 +122,9 @@ def alloc_page(emu):
         if probe_addr(emu, addr):
             addr += 0x1000
             continue
-        emu.mem_map(addr, 0x1000)
+        emu.mem_map(addr, PAGE_SIZE)
         return addr
 
 
 def free_page(emu, addr):
-    emu.mem_free(addr, 0x1000)
+    emu.mem_free(addr, PAGE_SIZE)

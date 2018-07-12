@@ -124,6 +124,8 @@ class Emulator(unicorn.Uc):
 
         self._scratch = None
 
+        self._dis = None
+
     @property
     def scratch(self):
         if self._scratch is None:
@@ -131,6 +133,13 @@ class Emulator(unicorn.Uc):
             logger.debug('mapped scratch space at 0x%x', self._scratch)
 
         return self._scratch
+
+    @property
+    def dis(self):
+        if self._dis is None:
+            self._dis = self.arch.get_capstone()
+            self._dis.detail = True
+        return self._dis
 
     def _handle_hook(self, hook_type, *args, **kwargs):
         for fn in self._hooks[hook_type]:

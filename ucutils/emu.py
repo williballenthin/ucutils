@@ -93,7 +93,7 @@ class Emulator(unicorn.Uc):
         emu.hook_add(unicorn.UC_HOOK_CODE, lambda *args: print(args))
         emu.hook_add(unicorn.UC_HOOK_CODE, lambda *args: logger.debug('%s', args))
     '''
-    def __init__(self, arch_const, mode_const, *args, **kwargs):
+    def __init__(self, arch_const, mode_const, plat=None, *args, **kwargs):
         # must be set before super called, because its referenced in getattr
         self.arch = ucutils.arch.get_arch(arch_const, mode_const)
 
@@ -109,6 +109,9 @@ class Emulator(unicorn.Uc):
         # public.
         self.is64 = mode_const == unicorn.UC_MODE_64
 
+        # public.
+        # platform specific helper instance from `ucutils.plat.*`.
+        self.plat = ucutils.plat.bind(self, plat)
 
         # public.
         self.ptr_size = self.arch.get_ptr_size()

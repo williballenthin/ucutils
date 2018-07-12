@@ -114,6 +114,16 @@ class UnicornCli(cmd.Cmd):
         except unicorn.UcError:
             print('invalid memory')
 
+    def do_dd(self, line):
+        addr = self.parse_addr(line)
+        for i in range(0x10):
+            try:
+                q = ucutils.parse_uint32(self.emu, addr + (i * 4))
+            except unicorn.UcError:
+                print('invalid memory')
+                break
+            print('0x%08x: 0x%x' % (addr + (i * 4), q))
+
     def do_dq(self, line):
         addr = self.parse_addr(line)
         for i in range(0x10):

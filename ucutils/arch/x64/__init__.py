@@ -142,10 +142,6 @@ def get_fs(uc, scratch):
     return get_msr(uc, 0xC0000100, scratch)
 
 
-def emit_ptr(emu, addr, value):
-    ucutils.emit_uint64(emu, addr, value)
-
-
 def get_pc(emu):
     return emu.reg_read(PROGRAM_COUNTER)
 
@@ -176,6 +172,14 @@ def emu_go(emu, addr):
 
 def emu_stepi(emu):
     emu.emu_start(get_pc(emu), 0xFFFFFFFFFFFFFFFF, count=1)
+
+
+def emit_ptr(emu, addr, value):
+    ucutils.emit_uint64(emu, addr, value)
+
+
+def get_ptr_size():
+    return 0x8
 
 
 def parse_ptr(emu, addr):

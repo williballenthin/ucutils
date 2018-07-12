@@ -190,6 +190,16 @@ def emu_stepi(emu):
     emu.emu_start(get_pc(emu), 0xFFFFFFFF, count=1)
 
 
+def emit_ptr(emu, addr, value):
+    ucutils.emit_uint32(emu, addr, value)
+
+
 def parse_ptr(emu, addr):
     buf = emu.mem_read(addr, 0x4)
     return struct.unpack('<I', buf)[0]
+
+
+def get_ptr_size():
+    return 0x4
+
+

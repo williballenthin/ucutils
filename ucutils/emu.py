@@ -109,6 +109,10 @@ class Emulator(unicorn.Uc):
         # public.
         self.is64 = mode_const == unicorn.UC_MODE_64
 
+
+        # public.
+        self.ptr_size = self.arch.get_ptr_size()
+
         # mapping from hook type to list of handlers
         self._hooks = collections.defaultdict(lambda: [])
 

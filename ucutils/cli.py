@@ -151,9 +151,10 @@ class UnicornCli(cmd.Cmd):
             addr = self.parse_addr(line)
             count = 1
 
-        dis = capstone.Cs(capstone.CS_ARCH_X86, capstone.CS_MODE_64)
+        dis = self.emu.arch.get_capstone()
         try:
-            for op in dis.disasm(self.emu.mem_read(addr, 0x10 * count), addr):
+            buf = self.emu.mem[addr:addr + 0x10 * count]
+            for op in dis.disasm(bytes(buf), addr):
                 print("0x%x:\t%s\t%s" % (op.address, op.mnemonic, op.op_str))
         except unicorn.UcError:
             print('invalid memory')

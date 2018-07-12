@@ -128,7 +128,6 @@ def map_teb(emu):
 
 def append_ldr_data_entry(emu, entry_addr):
     teb_addr = get_teb_addr(emu)
-    print('teb: ' + hex(teb_addr))
     teb = parse_teb(emu, teb_addr)
     peb = parse_peb(emu, teb['peb'])
     ldr_data_addr = peb['ldr_data']

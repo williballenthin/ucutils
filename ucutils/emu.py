@@ -42,6 +42,8 @@ class MemoryAccessor(object):
         else:
             return super(MemoryAccessor, self).__getitem__(key)
 
+    # TODO: __setitem__ to write to memory
+
     def _find_heap_range(self, size):
 
         num_pages = ucutils.align(size, PAGE_SIZE) // PAGE_SIZE

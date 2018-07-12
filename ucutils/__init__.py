@@ -79,8 +79,12 @@ def parse_uint64(emu, addr):
     return struct.unpack('<Q', buf)[0]
 
 
-def parse_utf16(emu, addr, length=0x100):
+def parse_ascii(emu, addr, length=0x100):
     return emu.mem_read(addr, length).partition(b'\x00')[0].decode('ascii')
+
+
+def parse_utf16(emu, addr, length=0x100):
+    return emu.mem_read(addr, length).partition(b'\x00\x00')[0].decode('utf-16le')
 
 
 def probe_addr(emu, addr):

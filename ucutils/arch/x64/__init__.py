@@ -15,6 +15,12 @@ logger = logging.getLogger(__name__)
 # the unicorn constant for $pc
 PROGRAM_COUNTER = unicorn.x86_const.UC_X86_REG_RIP
 
+# the unicorn constant for $sp
+STACK_POINTER = unicorn.x86_const.UC_X86_REG_RSP
+
+# the unicorn constant for $bp
+BASE_POINTER = unicorn.x86_const.UC_X86_REG_RBP
+
 
 # unicorn and capstone are separate projects.
 # i'm not sure that the register mappings are guaranteed to be consistent.
@@ -146,6 +152,22 @@ def get_pc(emu):
 
 def set_pc(emu, val):
     return emu.reg_write(PROGRAM_COUNTER, val)
+
+
+def get_sp(emu):
+    return emu.reg_read(STACK_POINTER)
+
+
+def set_sp(emu, val):
+    return emu.reg_write(STACK_POINTER, val)
+
+
+def get_bp(emu):
+    return emu.reg_read(BASE_POINTER)
+
+
+def set_bp(emu, val):
+    return emu.reg_write(BASE_POINTER, val)
 
 
 def emu_go(emu, addr):

@@ -22,6 +22,14 @@ logger = logging.getLogger(__name__)
 # the unicorn constant for $pc
 PROGRAM_COUNTER = unicorn.x86_const.UC_X86_REG_EIP
 
+# the unicorn constant for $sp
+STACK_POINTER = unicorn.x86_const.UC_X86_REG_ESP
+
+# the unicorn constant for $bp
+BASE_POINTER = unicorn.x86_const.UC_X86_REG_EBP
+
+
+
 # via: https://github.com/unicorn-engine/unicorn/blob/master/tests/regress/x86_gdt.py
 F_GRANULARITY = 0x8
 F_PROT_32 = 0x4
@@ -156,6 +164,22 @@ def get_pc(emu):
 
 def set_pc(emu, val):
     return emu.reg_write(PROGRAM_COUNTER, val)
+
+
+def get_sp(emu):
+    return emu.reg_read(STACK_POINTER)
+
+
+def set_sp(emu, val):
+    return emu.reg_write(STACK_POINTER, val)
+
+
+def get_bp(emu):
+    return emu.reg_read(BASE_POINTER)
+
+
+def set_bp(emu, val):
+    return emu.reg_write(BASE_POINTER, val)
 
 
 def emu_go(emu, addr):

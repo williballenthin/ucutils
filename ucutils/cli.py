@@ -161,5 +161,9 @@ class UnicornCli(cmd.Cmd):
             print('error: %s' % (e))
 
     def do_sym(self, line):
-        addr = self.parse_addr(line)
-        print('0x%08x: %s' % (addr, self.emu.symbols.get(addr, '????')))
+        if line:
+            addr = self.parse_addr(line)
+            print('0x%08x: %s' % (addr, self.emu.symbols.get(addr, '????')))
+        else:
+            for addr, name in sorted(self.emu.symbols.items()):
+                print('0x%08x: %s' % (addr, name))

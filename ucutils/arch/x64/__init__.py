@@ -185,3 +185,10 @@ def get_ptr_size():
 def parse_ptr(emu, addr):
     buf = emu.mem_read(addr, 0x8)
     return struct.unpack('<Q', buf)[0]
+
+
+def map_gs(emu, size=ucutils.GS_SIZE):
+    gs_addr = emu.mem.alloc(size, reason='gs segment')
+    logger.debug('mapped gs segment at 0x%x', gs_addr)
+    set_gs(emu, gs_addr, emu.scratch)
+    return gs_addr

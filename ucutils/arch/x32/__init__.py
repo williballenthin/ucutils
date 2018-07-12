@@ -203,3 +203,20 @@ def get_ptr_size():
     return 0x4
 
 
+def get_gdt(emu):
+    if 'GDT' not in emu.mem.symbols.values():
+        raise KeyError('GDT not mapped')
+    return [addr for addr, name in emu.mem.symbols.items() if name == 'GDT'][0]
+
+
+def map_fs(emu, size=ucutils.FS_SIZE):
+    try:
+        gdt_addr = get_gdt(emu)
+    except KeyError:
+        gdt_addr = emu.mem.alloc(ucutils.FS_SIZE, reason='GDT')
+        init_gdt(emu, gdt_addr)
+
+    fs_addr = emu.mem.alloc(size, reason='fs segment')
+    logger.debug('mapped fs segment at 0x%x', fs_addr)
+    set_fs(emu, gdt_addr, fs_addr, size)
+    return fs_addr

@@ -152,8 +152,12 @@ class Emulator(unicorn.Uc):
         register names are lowercase.
         `pc` is a shortcut for the platform program counter.
         '''
-        if k == 'pc':
+        if k == 'pc' or k == 'program_counter':
             return self.arch.get_pc(self)
+        elif k == 'stack_pointer':
+            return self.arch.get_sp(self)
+        elif k == 'base_pointer':
+            return self.arch.get_bp(self)
 
         arch = unicorn.Uc.__getattribute__(self, 'arch')
         #c = self.arch.S2C.get(k, None)
@@ -174,8 +178,12 @@ class Emulator(unicorn.Uc):
         register names are lowercase.
         `pc` is a shortcut for the platform program counter.
         '''
-        if k == 'pc':
+        if k == 'pc' or k == 'program_counter':
             return self.arch.set_pc(self, v)
+        elif k == 'stack_pointer':
+            return self.arch.set_sp(self, v)
+        elif k == 'base_pointer':
+            return self.arch.set_bp(self, v)
 
         if hasattr(self, 'arch'):
             c = self.arch.S2C.get(k, None)

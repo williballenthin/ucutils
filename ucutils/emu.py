@@ -13,6 +13,9 @@ import ucutils.arch
 from ucutils import PAGE_SIZE
 
 
+SCRATCH_SIZE = PAGE_SIZE
+
+
 logger = logging.getLogger(__name__)
 
 
@@ -118,6 +121,16 @@ class Emulator(unicorn.Uc):
 
         # mapping from hook type to list of handlers
         self._hooks = collections.defaultdict(lambda: [])
+
+        self._scratch = None
+
+    @property
+    def scratch(self):
+        if self._scratch is None:
+            self._scratch = self.mem.alloc(SCRATCH_SIZE, reason='scratch')
+            logger.debug('mapped scratch space at 0x%x', self._scratch)
+
+        return self._scratch
 
     def _handle_hook(self, hook_type, *args, **kwargs):
         for fn in self._hooks[hook_type]:

@@ -249,3 +249,33 @@ class UnicornCli(cmd.Cmd):
     def do_maps(self, line):
         for addr, name in sorted(self.emu.mem.symbols.items()):
             print('0x%08x: %s' % (addr, name))
+
+    def do_writefile(self, line):
+        '''
+        write memory to file.
+
+        Usage::
+
+            writefile filename address size
+
+        Example::
+
+            > writefile decoded.bin 0x8000 0x100
+            wrote 0x200 bytes to decoded.bin
+        '''
+        parts = shlex.split(line)
+        if len(parts) != 3:
+            print('error: three arguments required:')
+            print('')
+            print('    > writefile filename address size')
+            return
+
+        filename = parts[0]
+        addr = self.parse_addr(parts[1])
+        size = int(parts[2], 0x10)
+
+        buf = self.emu.mem[addr:addr+size]
+        with open(filename, 'wb') as f:
+            f.write(buf)
+
+        print('wrote %d bytes to %s' % (len(buf), filename))

@@ -2,6 +2,7 @@ import os
 import sys
 import logging
 
+import pefile
 import ucutils
 import unicorn
 import argparse
@@ -12,25 +13,6 @@ import ucutils.plat.win32
 
 
 logger = logging.getLogger(__name__)
-
-
-class WriteLogger(ucutils.emu.Hook):
-    '''
-    Example::
-
-        wl = WriteLogger(dis)
-        with hook(emu, wl):
-            emu.go(0x401000)
-    '''
-    HOOK_TYPE = unicorn.UC_HOOK_MEM_WRITE
-
-    def __init__(self, dis):
-        super(Hook, self).__init__()
-
-    def hook(self, uc, address, size, user_data):
-        buf = uc.mem_read(address, size)
-        op = next(self.dis.disasm(bytes(buf), address))
-        logger.debug("0x%x:\t%s\t%s" % (op.address, op.mnemonic, op.op_str))
 
 
 def load(emu, sc_addr, sc, dlls):
@@ -111,6 +93,9 @@ def main(argv=None):
     cl = ucutils.emu.CodeLogger(emu.arch.get_capstone())
     cl.install(emu)
 
+    wl = ucutils.emu.WriteLogger()
+    wl.install(emu)
+
     cli = ucutils.cli.UnicornCli(emu)
     if args.c:
         for cmd in args.c.split(';'):
@@ -119,8 +104,8 @@ def main(argv=None):
                 continue
             if cli.onecmd(cmd):
                 break
-    else:
-        cli.cmdloop()
+
+    cli.cmdloop()
 
     return 0
 

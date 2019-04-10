@@ -2,6 +2,7 @@
 import ast
 import cmd
 import operator
+import itertools
 
 import unicorn
 import capstone
@@ -143,18 +144,42 @@ class UnicornCli(cmd.Cmd):
             print('0x%08x: 0x%x' % (addr + (i * 8), q))
 
     def do_u(self, line):
-        if ' ' in line:
+        '''
+        disassemble at the given address.
+
+        Usage::
+
+            u [address=$pc [count=5]]
+
+        Example::
+
+            > u
+            0x8000: mov     edx, 0x187c825a
+            0x8005: fcmovnb st(0), st(5)
+            ...
+
+            > u 0x8000
+            0x8000: mov     edx, 0x187c825a
+            0x8005: fcmovnb st(0), st(5)
+            ...
+
+            > u eip 2
+            0x8000: mov     edx, 0x187c825a
+            0x8005: fcmovnb st(0), st(5)
+        '''
+        count = 5
+        if not line:
+            addr = self.emu.pc
+        else:
             addr_line, _, count_line = line.partition(' ')
             addr = self.parse_addr(addr_line)
-            count = int(line, 0x10)
-        else:
-            addr = self.parse_addr(line)
-            count = 1
+            if count_line:
+                count = int(count_line, 0x10)
 
         dis = self.emu.arch.get_capstone()
         try:
             buf = self.emu.mem[addr:addr + 0x10 * count]
-            for op in dis.disasm(bytes(buf), addr):
+            for op in itertools.islice(dis.disasm(bytes(buf), addr), count):
                 print("0x%x:\t%s\t%s" % (op.address, op.mnemonic, op.op_str))
         except unicorn.UcError:
             print('invalid memory')

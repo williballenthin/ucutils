@@ -287,6 +287,33 @@ class CodeLogger(Hook):
         logger.debug("0x%x:\t%s\t%s" % (op.address, op.mnemonic, op.op_str))
 
 
+class WriteLogger(Hook):
+    '''
+    Example::
+
+        wl = WriteLogger(dis)
+        with hook(emu, wl):
+            emu.go(0x401000)
+    '''
+    HOOK_TYPE = unicorn.UC_HOOK_MEM_WRITE
+
+    MEM_TYPES = {
+        unicorn.UC_MEM_READ: "mem read",
+        unicorn.UC_MEM_WRITE: "mem write",
+        unicorn.UC_MEM_FETCH: "mem fetch",
+        unicorn.UC_MEM_READ_UNMAPPED: "mem read (unmapped)",
+        unicorn.UC_MEM_WRITE_UNMAPPED: "mem write (unmapped)",
+        unicorn.UC_MEM_FETCH_UNMAPPED: "mem fetch (unmapped)",
+        unicorn.UC_MEM_WRITE_PROT: "mem write (protected)",
+        unicorn.UC_MEM_READ_PROT: "mem read (protected)",
+        unicorn.UC_MEM_FETCH_PROT: "mem fetch (protected)",
+        unicorn.UC_MEM_READ_AFTER: "mem read (after)",
+    }
+
+    def hook(self, uc, write_type, address, size, value, user_data):
+        logger.debug('%s: addr:0x%x size:0x%x value:0x%x', self.MEM_TYPES[write_type], address, size, value)
+
+
 @contextlib.contextmanager
 def context(emu):
     '''

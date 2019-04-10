@@ -146,8 +146,21 @@ class Emulator(unicorn.Uc):
         return self._dis
 
     def _handle_hook(self, hook_type, *args, **kwargs):
+        should_stop = False
         for fn in self._hooks[hook_type]:
-            fn(*args, **kwargs)
+            if fn(*args, **kwargs)== False:
+                should_stop = True
+
+        if should_stop:
+            logger.debug('hook asking to stop')
+            self.emu_stop()
+
+        # for memory events, this may not stop the emulator
+        # see: https://github.com/unicorn-engine/unicorn/blob/master/include/unicorn/unicorn.h#L267
+        # (return type of callback is void)
+        #
+        # therefore, we explicitly call `emu_stop()` above.
+        return should_stop
 
     def hook_add(self, hook_type, fn):
         hook_list = self._hooks[hook_type]

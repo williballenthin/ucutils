@@ -2,6 +2,7 @@
 import ast
 import cmd
 import shlex
+import logging
 import operator
 import itertools
 
@@ -9,6 +10,9 @@ import unicorn
 import capstone
 
 import ucutils
+
+
+logger = logging.getLogger('ucutil.cli')
 
 
 # simple evaluator for mathematics
@@ -54,6 +58,57 @@ def eval_expr(expr):
       number
     '''
     return _eval_expr(ast.parse(expr, mode='eval').body)
+
+
+class RHook(ucutils.emu.Hook):
+    HOOK_TYPE = unicorn.UC_HOOK_MEM_READ
+
+    def __init__(self, target):
+        super(RHook, self).__init__()
+        self.target = target
+
+    def hook(self, uc, read_type, address, size, value, user_data):
+        if read_type != unicorn.UC_MEM_READ:
+            return
+
+        if address == self.target:
+            logger.debug('rhook break at 0x%x', address)
+
+        return address != self.target
+
+
+class WHook(ucutils.emu.Hook):
+    HOOK_TYPE = unicorn.UC_HOOK_MEM_WRITE
+
+    def __init__(self, target):
+        super(WHook, self).__init__()
+        self.target = target
+
+    def hook(self, uc, write_type, address, size, value, user_data):
+        if write_type != unicorn.UC_MEM_WRITE:
+            return
+
+        if address == self.target:
+            logger.debug('whook break at 0x%x', address)
+
+        return address != self.target
+
+
+class XHook(ucutils.emu.Hook):
+    HOOK_TYPE = unicorn.UC_HOOK_MEM_FETCH
+
+    def __init__(self, target):
+        super(XHook, self).__init__()
+        self.target = target
+
+    def hook(self, uc, fetch_type, address, size, value, user_data):
+        if fetch_type != unicorn.UC_MEM_FETCH:
+            return
+
+        if address == self.target:
+            logger.debug('xhook break at 0x%x', address)
+
+        return address != self.target
 
 
 class UnicornCli(cmd.Cmd):
@@ -279,3 +334,38 @@ class UnicornCli(cmd.Cmd):
             f.write(buf)
 
         print('wrote %d bytes to %s' % (len(buf), filename))
+
+    def do_ba(self, line):
+        '''
+        emulate until data breakpoint.
+
+        Usage::
+
+            ba access address
+
+        Values for access are:
+          - e: execute
+          - r: read
+          - w: write
+
+        note that, in contrast to common debuggers,
+         this emulator does not support multiple breakpoints.
+        therefore, this command immediately begins emulation,
+         and continues until the condition is met.
+        '''
+        parts = shlex.split(line)
+        if len(parts) != 2:
+            print('error: two arguments required:')
+            print('')
+            print('    > ba access address')
+            return
+
+        access = parts[0]
+        addr = self.parse_addr(parts[1])
+
+        if access not in 'erw':
+            print('error: invalid access. one of e, r, or w is required.')
+            return
+
+        with ucutils.emu.hook(self.emu, {'r': RHook, 'w': WHook, 'x': XHook}[access](addr)):
+            self.emu.go(-1)

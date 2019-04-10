@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 import ast
 import cmd
+import shlex
 import operator
 import itertools
 
@@ -120,9 +121,49 @@ class UnicornCli(cmd.Cmd):
             return int(line, 0x10)
 
     def do_dc(self, line):
-        addr = self.parse_addr(line)
+        '''
+        display as character (hexdump).
+
+        Usage::
+
+            dc [address=$pc [size=0x100]]
+
+        Example::
+
+            > dc
+            0x8000:
+            00000000: BA 5A 82 7C 18 DB C5 D9  74 24 F4 5E 29 C9 B1 59  .Z.|....t$.^)..Y
+            00000010: 31 56 14 03 56 14 83 EE  FC E2 F5 FC E8 82 00 00  1V..V...........
+            ...
+
+            > dc 0x8000
+            0x8000:
+            00000000: BA 5A 82 7C 18 DB C5 D9  74 24 F4 5E 29 C9 B1 59  .Z.|....t$.^)..Y
+            00000010: 31 56 14 03 56 14 83 EE  FC E2 F5 FC E8 82 00 00  1V..V...........
+            ...
+
+            > dc eip 10
+            0x8000:
+            00000000: BA 5A 82 7C 18 DB C5 D9  74 24 F4 5E 29 C9 B1 59  .Z.|....t$.^)..Y
+        '''
+        parts = shlex.split(line)
+
+        addr = self.emu.pc
+        if len(parts) > 0:
+            addr = self.parse_addr(parts[0])
+
+        size = 0x100
+        if len(parts) > 1:
+            size = int(parts[1], 0x10)
+
+        if len(parts) > 2:
+            print('error: invalid arguments. usage:')
+            print('')
+            print('    > dc [address=$pc [size=0x100]]')
+            return
+
         try:
-            print(ucutils.mem_hexdump(self.emu, addr, 0x100))
+            print(ucutils.mem_hexdump(self.emu, addr, size))
         except unicorn.UcError:
             print('invalid memory')
 

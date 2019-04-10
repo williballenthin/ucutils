@@ -105,8 +105,8 @@ class UnicornCli(cmd.Cmd):
     def parse_addr(self, line):
         if not line:
             return self.emu.rip
-        elif line in self.emu.arch.REGS:
-            return getattr(self.emu, line)
+        elif line.lower() in self.emu.arch.REGS:
+            return getattr(self.emu, line.lower())
         elif '+' in line or '-' in line or '*' in line:
             for reg in self.GPREGS:
                 line = line.replace(reg, hex(getattr(self.emu, reg.lower())))

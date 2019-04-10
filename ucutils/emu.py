@@ -128,6 +128,8 @@ class Emulator(unicorn.Uc):
 
         self._dis = None
 
+        JITFix().install(self)
+
     @property
     def scratch(self):
         if self._scratch is None:
@@ -312,6 +314,37 @@ class WriteLogger(Hook):
 
     def hook(self, uc, write_type, address, size, value, user_data):
         logger.debug('%s: addr:0x%x size:0x%x value:0x%x', self.MEM_TYPES[write_type], address, size, value)
+
+
+PAGE_MASK = 0xFFFFFFFFFFFFE000
+
+
+class JITFix(Hook):
+    '''
+    unicorn does not handle self-modifying code well.
+    see: https://github.com/unicorn-engine/unicorn/issues/820
+    specifically, it does not flush the translated code cache if an upcoming instruction is modified.
+
+    in this workaround, we detect writes to the same same page as the program counter.
+    if found, we fetch and store the entire page, which seems to cause unicorn to flush its code cache.
+
+    according to: https://github.com/unicorn-engine/unicorn/issues/820#issuecomment-299539935
+    the cache may be just 0x10 bytes from the current instruction,
+    which would improve performance by reducing the number of times we flush.
+    '''
+    HOOK_TYPE = unicorn.UC_HOOK_MEM_WRITE
+
+    def hook(self, uc, write_type, address, size, value, user_data):
+        if write_type != unicorn.UC_MEM_WRITE:
+            return
+
+        page = address & PAGE_MASK
+        if page != uc.pc & PAGE_MASK:
+            return
+
+        logger.debug('jitfix: flushing page: 0x%x', page)
+        page_buf = uc.mem_read(page, 0x1000)
+        uc.mem_write(page, bytes(page_buf))
 
 
 @contextlib.contextmanager

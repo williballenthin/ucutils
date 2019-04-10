@@ -103,7 +103,8 @@ def main(argv=None):
             if not cmd:
                 continue
             if cli.onecmd(cmd):
-                break
+                # note: early return
+                return 0
 
     cli.cmdloop()
 

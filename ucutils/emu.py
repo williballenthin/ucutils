@@ -4,14 +4,14 @@ import logging
 import functools
 import contextlib
 import collections
+from typing import Dict
 
-import six
 import unicorn
 
 import ucutils
 import ucutils.arch
+import ucutils.plat
 from ucutils import PAGE_SIZE
-
 
 SCRATCH_SIZE = PAGE_SIZE
 
@@ -19,33 +19,30 @@ SCRATCH_SIZE = PAGE_SIZE
 logger = logging.getLogger(__name__)
 
 
-class MemoryAccessor(object):
+class MemoryAccessor:
     def __init__(self, emu):
         self.emu = emu
-
-        # type: Map[int, str]
-        self.symbols = {}
+        self.symbols: Dict[int, str] = {}
 
     def __getitem__(self, key):
         if isinstance(key, slice):
             if key.step not in (1, None):
-                raise ValueError('unsupported step value')
+                raise ValueError("unsupported step value")
 
             if key.stop < key.start:
-                raise ValueError('must have positive range')
+                raise ValueError("must have positive range")
 
             size = key.stop - key.start
             return self.emu.mem_read(key.start, size)
-        elif isinstance(key, six.integer_types):
+        elif isinstance(key, int):
             buf = self.emu.mem_read(key, 1)
             return buf[0]
         else:
-            return super(MemoryAccessor, self).__getitem__(key)
+            raise TypeError("unsupported type")
 
     # TODO: __setitem__ to write to memory
 
-    def _find_heap_range(self, size):
-
+    def _find_heap_range(self, size: int):
         num_pages = ucutils.align(size, PAGE_SIZE) // PAGE_SIZE
 
         addr = ucutils.HEAP_ADDR
@@ -62,25 +59,25 @@ class MemoryAccessor(object):
             else:
                 return addr
 
-    def alloc(self, size, reason=''):
+    def alloc(self, size: int, reason=""):
         addr = self._find_heap_range(size)
         self.emu.mem_map(addr, ucutils.align(size, PAGE_SIZE))
         self.symbols[addr] = reason
         return addr
 
-    def map_data(self, addr, data, reason=''):
+    def map_data(self, addr: int, data: bytes, reason=""):
         size = ucutils.align(len(data), PAGE_SIZE)
         self.emu.mem_map(addr, size)
         self.emu.mem_write(addr, data)
         self.symbols[addr] = reason
 
-    def map_region(self, addr, size, reason=''):
+    def map_region(self, addr: int, size: int, reason=""):
         self.emu.mem_map(addr, ucutils.align(size, PAGE_SIZE))
         self.symbols[addr] = reason
 
 
 class Emulator(unicorn.Uc):
-    '''
+    """
     enhancements:
       - supports multiple hooks of the same type in parallel
       - shortcuts for reg get/set as properties
@@ -97,7 +94,8 @@ class Emulator(unicorn.Uc):
         # multiple simultaneous hooks
         emu.hook_add(unicorn.UC_HOOK_CODE, lambda *args: print(args))
         emu.hook_add(unicorn.UC_HOOK_CODE, lambda *args: logger.debug('%s', args))
-    '''
+    """
+
     def __init__(self, arch_const, mode_const, plat=None, *args, **kwargs):
         # must be set before super called, because its referenced in getattr
         self.arch = ucutils.arch.get_arch(arch_const, mode_const)
@@ -128,13 +126,11 @@ class Emulator(unicorn.Uc):
 
         self._dis = None
 
-        JITFix().install(self)
-
     @property
     def scratch(self):
         if self._scratch is None:
-            self._scratch = self.mem.alloc(SCRATCH_SIZE, reason='scratch')
-            logger.debug('mapped scratch space at 0x%x', self._scratch)
+            self._scratch = self.mem.alloc(SCRATCH_SIZE, reason="scratch")
+            logger.debug("mapped scratch space at 0x%x", self._scratch)
 
         return self._scratch
 
@@ -148,11 +144,14 @@ class Emulator(unicorn.Uc):
     def _handle_hook(self, hook_type, *args, **kwargs):
         should_stop = False
         for fn in self._hooks[hook_type]:
-            if fn(*args, **kwargs)== False:
+            try:
+                fn(*args, **kwargs)
+            except Hook.Stop:
+                logger.debug("hook asking to stop: %s", fn)
                 should_stop = True
 
         if should_stop:
-            logger.debug('hook asking to stop')
+            logger.debug("stopping")
             self.emu_stop()
 
         # for memory events, this may not stop the emulator
@@ -173,7 +172,7 @@ class Emulator(unicorn.Uc):
     def hook_del(self, fn):
         if isinstance(fn, int):
             # TODO: handle better
-            raise ValueError('this is an Emulator, not unicorn.Uc!')
+            raise ValueError("this is an Emulator, not unicorn.Uc!")
 
         for hook_type, hook_list in self._hooks.items():
             try:
@@ -196,11 +195,11 @@ class Emulator(unicorn.Uc):
         self.arch.emit_ptr(self, self.stack_pointer, val)
 
     def pop(self):
-        val = self.arch.parse_ptr(self, self.stack_pointer)
+        _ = self.arch.parse_ptr(self, self.stack_pointer)
         self.stack_pointer += self.ptr_size
 
     def __getattr__(self, k):
-        '''
+        """
         support reg access shortcut, like::
 
             print(hex(emu.pc))
@@ -208,16 +207,16 @@ class Emulator(unicorn.Uc):
 
         register names are lowercase.
         `pc` is a shortcut for the platform program counter.
-        '''
-        if k == 'pc' or k == 'program_counter':
+        """
+        if k == "pc" or k == "program_counter":
             return self.arch.get_pc(self)
-        elif k == 'stack_pointer':
+        elif k == "stack_pointer":
             return self.arch.get_sp(self)
-        elif k == 'base_pointer':
+        elif k == "base_pointer":
             return self.arch.get_bp(self)
 
-        arch = unicorn.Uc.__getattribute__(self, 'arch')
-        #c = self.arch.S2C.get(k, None)
+        arch = unicorn.Uc.__getattribute__(self, "arch")
+        # c = self.arch.S2C.get(k, None)
         c = arch.S2C.get(k, None)
         if c is None:
             # unicorn.Uc has no __getattr__, so fall back directly to __getattribute__
@@ -226,7 +225,7 @@ class Emulator(unicorn.Uc):
         return self.reg_read(c)
 
     def __setattr__(self, k, v):
-        '''
+        """
         set reg shortcut, like::
 
             emu.pc  = 0x401000
@@ -234,15 +233,15 @@ class Emulator(unicorn.Uc):
 
         register names are lowercase.
         `pc` is a shortcut for the platform program counter.
-        '''
-        if k == 'pc' or k == 'program_counter':
+        """
+        if k == "pc" or k == "program_counter":
             return self.arch.set_pc(self, v)
-        elif k == 'stack_pointer':
+        elif k == "stack_pointer":
             return self.arch.set_sp(self, v)
-        elif k == 'base_pointer':
+        elif k == "base_pointer":
             return self.arch.set_bp(self, v)
 
-        if hasattr(self, 'arch'):
+        if hasattr(self, "arch"):
             c = self.arch.S2C.get(k, None)
             if c is not None:
                 return self.reg_write(c, v)
@@ -250,24 +249,25 @@ class Emulator(unicorn.Uc):
         return super(Emulator, self).__setattr__(k, v)
 
 
-class Hook(object):
-    '''
+class Hook:
+    """
     note: for use with `Emulator` instances, not `unicorn.Uc` instances.
-    '''
-    HOOK_TYPE = NotImplementedError()
+    """
 
-    def __init__(self):
-        super(Hook, self).__init__()
+    class Stop(Exception):
+        pass
+
+    HOOK_TYPE = NotImplementedError()
 
     def hook(self, *args, **kwargs):
         raise NotImplementedError()
 
     def install(self, emu):
-        logger.debug('installing hook')
+        logger.debug("installing hook")
         emu.hook_add(self.HOOK_TYPE, self.hook)
 
     def uninstall(self, emu):
-        logger.debug('uninstalling hook')
+        logger.debug("uninstalling hook")
         # note: this doesn't work with vanilla `unicorn.Uc`.
         # would have to remove the hook by type.
         emu.hook_del(self.hook)
@@ -283,13 +283,14 @@ def hook(emu, hook):
 
 
 class CodeLogger(Hook):
-    '''
+    """
     Example::
 
         cl = CodeLogger(dis)
         with hook(emu, cl):
             emu.go(0x401000)
-    '''
+    """
+
     HOOK_TYPE = unicorn.UC_HOOK_CODE
 
     def __init__(self, dis):
@@ -303,13 +304,14 @@ class CodeLogger(Hook):
 
 
 class WriteLogger(Hook):
-    '''
+    """
     Example::
 
         wl = WriteLogger(dis)
         with hook(emu, wl):
             emu.go(0x401000)
-    '''
+    """
+
     HOOK_TYPE = unicorn.UC_HOOK_MEM_WRITE
 
     MEM_TYPES = {
@@ -326,43 +328,21 @@ class WriteLogger(Hook):
     }
 
     def hook(self, uc, write_type, address, size, value, user_data):
-        logger.debug('%s: addr:0x%x size:0x%x value:0x%x', self.MEM_TYPES[write_type], address, size, value)
+        logger.debug(
+            "%s: addr:0x%x size:0x%x value:0x%x",
+            self.MEM_TYPES[write_type],
+            address,
+            size,
+            value,
+        )
 
 
 PAGE_MASK = 0xFFFFFFFFFFFFE000
 
 
-class JITFix(Hook):
-    '''
-    unicorn does not handle self-modifying code well.
-    see: https://github.com/unicorn-engine/unicorn/issues/820
-    specifically, it does not flush the translated code cache if an upcoming instruction is modified.
-
-    in this workaround, we detect writes to the same same page as the program counter.
-    if found, we fetch and store the entire page, which seems to cause unicorn to flush its code cache.
-
-    according to: https://github.com/unicorn-engine/unicorn/issues/820#issuecomment-299539935
-    the cache may be just 0x10 bytes from the current instruction,
-    which would improve performance by reducing the number of times we flush.
-    '''
-    HOOK_TYPE = unicorn.UC_HOOK_MEM_WRITE
-
-    def hook(self, uc, write_type, address, size, value, user_data):
-        if write_type != unicorn.UC_MEM_WRITE:
-            return
-
-        page = address & PAGE_MASK
-        if page != uc.pc & PAGE_MASK:
-            return
-
-        logger.debug('jitfix: flushing page: 0x%x', page)
-        page_buf = uc.mem_read(page, 0x1000)
-        uc.mem_write(page, bytes(page_buf))
-
-
 @contextlib.contextmanager
 def context(emu):
-    '''
+    """
     provide a temporary emulation block, and restore the CPU context at the end.
     this won't restore memory, so be careful.
 
@@ -373,7 +353,7 @@ def context(emu):
             emu.go(0x401000)
             assert emu.pc == 0x401000
         assert emu.pc == 0xAAAA
-    '''
+    """
     try:
         ctx = emu.context_save()
         yield

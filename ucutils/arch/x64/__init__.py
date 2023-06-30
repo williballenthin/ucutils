@@ -8,7 +8,6 @@ import capstone
 
 import ucutils
 
-
 logger = logging.getLogger(__name__)
 
 
@@ -33,13 +32,13 @@ S2U = {}  # from string to unicorn constant
 S2C = {}  # from string to capstone constant
 REGS = set([])  # valid register names
 for const_name in dir(capstone.x86_const):
-    if not const_name.startswith('X86_REG_'):
+    if not const_name.startswith("X86_REG_"):
         continue
 
-    uconst_name = 'UC_' + const_name
-    reg_name = const_name[len('X86_REG_'):].lower()
-    uconst = getattr(unicorn.x86_const, uconst_name)
-    cconst = getattr(capstone.x86_const, const_name)
+    uconst_name = "UC_" + const_name
+    reg_name = const_name[len("X86_REG_") :].lower()
+    uconst = getattr(unicorn.x86_const, uconst_name, None)
+    cconst = getattr(capstone.x86_const, const_name, None)
 
     U2C[uconst] = cconst
     C2U[cconst] = uconst
@@ -51,18 +50,18 @@ for const_name in dir(capstone.x86_const):
 
 
 def get_capstone():
-    '''
+    """
     construct a capstone disassembler instance appropriate for this architecture.
-    '''
+    """
     return capstone.Cs(capstone.CS_ARCH_X86, capstone.CS_MODE_64)
 
 
 # via: https://github.com/unicorn-engine/unicorn/pull/901/files
 def set_msr(uc, msr, value, scratch):
-    '''
+    """
     set the given model-specific register (MSR) to the given value.
     this will clobber some memory at the given scratch address, as it emits some code.
-    '''
+    """
     # save clobbered registers
     orax = uc.reg_read(unicorn.x86_const.UC_X86_REG_RAX)
     ordx = uc.reg_read(unicorn.x86_const.UC_X86_REG_RDX)
@@ -70,12 +69,12 @@ def set_msr(uc, msr, value, scratch):
     orip = uc.reg_read(unicorn.x86_const.UC_X86_REG_RIP)
 
     # x86: wrmsr
-    buf = b'\x0f\x30'
+    buf = b"\x0f\x30"
     uc.mem_write(scratch, buf)
     uc.reg_write(unicorn.x86_const.UC_X86_REG_RAX, value & 0xFFFFFFFF)
     uc.reg_write(unicorn.x86_const.UC_X86_REG_RDX, (value >> 32) & 0xFFFFFFFF)
     uc.reg_write(unicorn.x86_const.UC_X86_REG_RCX, msr & 0xFFFFFFFF)
-    uc.emu_start(scratch, scratch+len(buf), count=1)
+    uc.emu_start(scratch, scratch + len(buf), count=1)
 
     # restore clobbered registers
     uc.reg_write(unicorn.x86_const.UC_X86_REG_RAX, orax)
@@ -85,10 +84,10 @@ def set_msr(uc, msr, value, scratch):
 
 
 def get_msr(uc, msr, scratch):
-    '''
+    """
     fetch the contents of the given model-specific register (MSR).
     this will clobber some memory at the given scratch address, as it emits some code.
-    '''
+    """
     # save clobbered registers
     orax = uc.reg_read(unicorn.x86_const.UC_X86_REG_RAX)
     ordx = uc.reg_read(unicorn.x86_const.UC_X86_REG_RDX)
@@ -96,10 +95,10 @@ def get_msr(uc, msr, scratch):
     orip = uc.reg_read(unicorn.x86_const.UC_X86_REG_RIP)
 
     # x86: rdmsr
-    buf = b'\x0f\x32'
+    buf = b"\x0f\x32"
     uc.mem_write(scratch, buf)
     uc.reg_write(unicorn.x86_const.UC_X86_REG_RCX, msr & 0xFFFFFFFF)
-    uc.emu_start(scratch, scratch+len(buf), count=1)
+    uc.emu_start(scratch, scratch + len(buf), count=1)
     eax = uc.reg_read(unicorn.x86_const.UC_X86_REG_EAX)
     edx = uc.reg_read(unicorn.x86_const.UC_X86_REG_EDX)
 
@@ -113,32 +112,32 @@ def get_msr(uc, msr, scratch):
 
 
 def set_gs(uc, addr, scratch):
-    '''
+    """
     set the GS.base hidden descriptor-register field to the given address.
     this enables referencing the gs segment on x86-64.
-    '''
+    """
     return set_msr(uc, 0xC0000101, addr, scratch)
 
 
 def get_gs(uc, scratch):
-    '''
+    """
     fetch the GS.base hidden descriptor-register field.
-    '''
+    """
     return get_msr(uc, 0xC0000101, scratch)
 
 
 def set_fs(uc, addr, scratch):
-    '''
+    """
     set the FS.base hidden descriptor-register field to the given address.
     this enables referencing the fs segment on x86-64.
-    '''
+    """
     return set_msr(uc, 0xC0000100, addr, scratch)
 
 
 def get_fs(uc, scratch):
-    '''
+    """
     fetch the FS.base hidden descriptor-register field.
-    '''
+    """
     return get_msr(uc, 0xC0000100, scratch)
 
 
@@ -184,11 +183,11 @@ def get_ptr_size():
 
 def parse_ptr(emu, addr):
     buf = emu.mem_read(addr, 0x8)
-    return struct.unpack('<Q', buf)[0]
+    return struct.unpack("<Q", buf)[0]
 
 
 def map_gs(emu, size=ucutils.GS_SIZE):
-    gs_addr = emu.mem.alloc(size, reason='gs segment')
-    logger.debug('mapped gs segment at 0x%x', gs_addr)
+    gs_addr = emu.mem.alloc(size, reason="gs segment")
+    logger.debug("mapped gs segment at 0x%x", gs_addr)
     set_gs(emu, gs_addr, emu.scratch)
     return gs_addr

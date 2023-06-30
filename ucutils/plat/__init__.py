@@ -1,7 +1,7 @@
 import functools
 
 
-class Wrapper(object):
+class Wrapper:
     def __init__(self, emu, plat):
         self.emu = emu
         self.plat = plat
@@ -15,8 +15,8 @@ class Wrapper(object):
 
 
 def bind(emu, plat):
-    '''
+    """
     return an object that behaves like a `ucutils.plat.*` instance,
     and if a property is called, passes the given emulator as the first argument
-    '''
+    """
     return Wrapper(emu, plat)

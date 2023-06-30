@@ -5,13 +5,12 @@ import unicorn
 import ucutils
 import ucutils.emu
 
-
 # x86-64::
 #
 #    0: mov rax, 0x1
 #    7: mov rbx, 0x2
 #    e: sub rbx, rax
-CODE = b'\x48\xC7\xC0\x01\x00\x00\x00\x48\xC7\xC3\x02\x00\x00\x00\x48\x29\xC3'
+CODE = b"\x48\xC7\xC0\x01\x00\x00\x00\x48\xC7\xC3\x02\x00\x00\x00\x48\x29\xC3"
 
 
 def test_read_reg():
@@ -41,7 +40,7 @@ def test_read_mem_slice():
     emu = ucutils.emu.Emulator(unicorn.UC_ARCH_X86, unicorn.UC_MODE_64)
     emu.mem_map(0x0, 0x1000)
     emu.mem_write(0x0, CODE)
-    assert emu.mem[0x0:0x2] == b'\x48\xC7'
+    assert emu.mem[0x0:0x2] == b"\x48\xC7"
 
 
 def test_read_mem_index():
@@ -60,6 +59,44 @@ def test_stepi():
     assert emu.rax == 0x1
 
 
+def test_stepi32():
+    # x86::
+    #
+    #     0:  c7 05 00 10 00 00 01 00 00 00   mov    DWORD PTR ds:0x1000,0x1
+    #     a:  b8 02 00 00 00                  mov    eax,0x2
+    #     f:  a3 02 20 00 00                  mov    ds:0x2002,eax
+    #     14: a3 00 10 00 00                  mov    ds:0x1000,eax
+    CODE = b"\xC7\x05\x00\x10\x00\x00\x01\x00\x00\x00\xB8\x02\x00\x00\x00\xA3\x02\x20\x00\x00\xA3\x00\x10\x00\x00"
+
+    emu = ucutils.emu.Emulator(unicorn.UC_ARCH_X86, unicorn.UC_MODE_32)
+    emu.mem.map_data(0x0, CODE, "code")
+    emu.mem.map_region(0x1000, 0x1000, "region1")
+    emu.mem.map_region(0x2000, 0x1000, "region2")
+
+    assert emu.mem_read(0x0, len(CODE)) == CODE
+    assert emu.pc == 0x0
+
+    emu.pc = 0x0
+    assert emu.pc == 0x0
+
+    emu.stepi()
+    assert emu.pc == 0xA
+
+    emu.stepi()
+    assert emu.pc == 0xF
+
+    emu.stepi()
+    assert emu.pc == 0x14
+
+    emu.stepi()
+    assert emu.pc == 0x19
+    assert emu.pc == len(CODE)
+
+    emu.mem_read(0x0, len(CODE)) == CODE
+    emu.mem_read(0x1000, 0x4) == b"\x02\x00\x00\x00"
+    emu.mem_read(0x2000, 0x4) == b"\x00\x00\x02\x00"
+
+
 def test_go():
     emu = ucutils.emu.Emulator(unicorn.UC_ARCH_X86, unicorn.UC_MODE_64)
     emu.mem_map(0x0, 0x1000)
@@ -70,10 +107,37 @@ def test_go():
     assert emu.rbx == 0x2
 
 
+def test_go32():
+    # x86::
+    #
+    #     0:  c7 05 00 10 00 00 01 00 00 00   mov    DWORD PTR ds:0x1000,0x1
+    #     a:  b8 02 00 00 00                  mov    eax,0x2
+    #     f:  a3 02 20 00 00                  mov    ds:0x2002,eax
+    #     14: a3 00 10 00 00                  mov    ds:0x1000,eax
+    CODE = b"\xC7\x05\x00\x10\x00\x00\x01\x00\x00\x00\xB8\x02\x00\x00\x00\xA3\x02\x20\x00\x00\xA3\x00\x10\x00\x00"
+
+    emu = ucutils.emu.Emulator(unicorn.UC_ARCH_X86, unicorn.UC_MODE_32)
+    emu.mem.map_data(0x0, CODE, "code")
+    emu.mem.map_region(0x1000, 0x1000, "region1")
+    emu.mem.map_region(0x2000, 0x1000, "region2")
+
+    assert emu.mem_read(0x0, len(CODE)) == CODE
+    assert emu.pc == 0x0
+
+    emu.go(len(CODE))
+    assert emu.pc == 0x19
+    assert emu.pc == len(CODE)
+
+    emu.mem_read(0x0, len(CODE)) == CODE
+    emu.mem_read(0x1000, 0x4) == b"\x02\x00\x00\x00"
+    emu.mem_read(0x2000, 0x4) == b"\x00\x00\x02\x00"
+
+
 class InsnCounter(ucutils.emu.Hook):
-    '''
+    """
     counts the number of times the code tracing hook is invoked.
-    '''
+    """
+
     HOOK_TYPE = unicorn.UC_HOOK_CODE
 
     def __init__(self):
@@ -98,11 +162,8 @@ def test_hooks():
         with ucutils.emu.hook(emu, c1):
             emu.stepi()
 
-    # because we're single stepping, the counts are inflated by two.
-    # for each step, the hook is invoked for the instruct that gets executed,
-    # and then for the instruction that would be executed next. so there's double counting.
-    assert c0.count == 4
-    assert c1.count == 2
+    assert c0.count == 2
+    assert c1.count == 1
 
 
 def test_context():
@@ -131,21 +192,21 @@ def test_alloc():
     assert emu.mem.alloc(0x1000) == ucutils.HEAP_ADDR
     assert emu.mem.alloc(0x1) == ucutils.HEAP_ADDR + 0x1000
     assert emu.mem.alloc(0x2000) == ucutils.HEAP_ADDR + 0x2000
-    assert emu.mem.alloc(0x2, reason='last') == ucutils.HEAP_ADDR + 0x4000
-    assert emu.mem.symbols[ucutils.HEAP_ADDR + 0x4000] == 'last'
+    assert emu.mem.alloc(0x2, reason="last") == ucutils.HEAP_ADDR + 0x4000
+    assert emu.mem.symbols[ucutils.HEAP_ADDR + 0x4000] == "last"
 
 
 def test_map_data():
     emu = ucutils.emu.Emulator(unicorn.UC_ARCH_X86, unicorn.UC_MODE_64)
 
-    emu.mem.map_data(0x1000, b'aaaa', reason='Aaaaah!')
-    assert emu.mem[0x1000:0x1000+0x4] == b'aaaa'
-    assert emu.mem.symbols[0x1000] == 'Aaaaah!'
+    emu.mem.map_data(0x1000, b"aaaa", reason="Aaaaah!")
+    assert emu.mem[0x1000 : 0x1000 + 0x4] == b"aaaa"
+    assert emu.mem.symbols[0x1000] == "Aaaaah!"
 
 
 def test_map_region():
     emu = ucutils.emu.Emulator(unicorn.UC_ARCH_X86, unicorn.UC_MODE_64)
 
-    emu.mem.map_region(0x1000, 0x1000, reason='Aaaaah!')
+    emu.mem.map_region(0x1000, 0x1000, reason="Aaaaah!")
     assert ucutils.probe_addr(emu, 0x1000) is True
-    assert emu.mem.symbols[0x1000] == 'Aaaaah!'
+    assert emu.mem.symbols[0x1000] == "Aaaaah!"

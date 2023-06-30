@@ -1,12 +1,13 @@
 #!/usr/bin/env python
 import logging
 import contextlib
+from typing import Dict
+from dataclasses import dataclass
 
 import unicorn
 
-from ucutils import PAGE_SIZE
 import ucutils.emu
-
+from ucutils import PAGE_SIZE
 
 logger = logging.getLogger(__name__)
 
@@ -23,7 +24,7 @@ class MemWriteTracker(ucutils.emu.Hook):
 
     def hook(self, uc, optype, addr, size, value, data):
         page_addr = ucutils.get_page_base(addr)
-        logger.debug('captured memory write: %x:%x@0x%x', value, size, addr)
+        logger.debug("captured memory write: %x:%x@0x%x", value, size, addr)
 
         if page_addr in self.original_pages:
             return
@@ -36,9 +37,14 @@ def restore_pages(emu, tracker):
         emu.mem_write(page_addr, bytes(page_buf))
 
 
+@dataclass
+class Checkpoint:
+    written_pages: Dict[int, bytes]
+
+
 @contextlib.contextmanager
 def checkpoint(emu):
-    '''
+    """
     save the state of the emulator and restore it after executing some block of logic.
     the contents of the context manager are a dictionary with the keys:
       - written_pages (Map[int, bytes]): the address and contents of written pages
@@ -52,12 +58,12 @@ def checkpoint(emu):
         assert emu.eax == 0x0
         assert emu.mem[0x0:0x4] == '\x00\x00\x00\x00'
         assert 0x0 in cp['written_pages']
-    '''
+    """
 
     # we are a little clever with this dictionary.
     # we'll yield it as the context manager block is entered, but it won't yet contain anything.
     # since dictionaries are mutable, we can place results into it after the block exits.
-    ret = {}
+    ret = Checkpoint(written_pages={})
     tracker = ucutils.checkpoint.MemWriteTracker()
     try:
         with ucutils.emu.context(emu):
@@ -65,6 +71,7 @@ def checkpoint(emu):
                 yield ret
 
     finally:
-        ret['written_pages'] = {page_addr: bytes(emu.mem_read(page_addr, PAGE_SIZE))
-                                for page_addr in tracker.original_pages.keys()}
+        ret.written_pages = {
+            page_addr: bytes(emu.mem_read(page_addr, PAGE_SIZE)) for page_addr in tracker.original_pages.keys()
+        }
         restore_pages(emu, tracker)

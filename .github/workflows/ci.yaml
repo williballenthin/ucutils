@@ -3,7 +3,7 @@ name: CI
 on: [push, pull_request]
 
 jobs:
-  build:
+  check:
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -18,4 +18,5 @@ jobs:
     - name: Pre-commit Checks
       run: |
         pip -q install pre-commit
+        pip install -e .[dev]
         pre-commit run --all-files

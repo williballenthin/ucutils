@@ -12,7 +12,7 @@ setup(
     install_requires=[
         "hexdump==3.3",
         "unicorn==2.0.1.post1",
-        "capstone==4.0.2",
+        "capstone==5.0.3",
         "pefile==2024.08.26",
 
         # for unicorn

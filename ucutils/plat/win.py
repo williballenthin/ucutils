@@ -96,9 +96,10 @@ def load_dll(emu, dll):
 
     emu.plat.append_ldr_data_entry(ldr_entry_addr)
 
-    for symbol in dll["pe"].DIRECTORY_ENTRY_EXPORT.symbols:
-        if not symbol.name:
-            continue
-        sym_addr = pe_addr + symbol.address
-        sym_name = "%s!%s" % (dll["filename"], symbol.name.decode("ascii"))
-        emu.symbols[sym_addr] = sym_name
+    if hasattr(dll["pe"], "DIRECTORY_ENTRY_EXPORT"):
+        for symbol in dll["pe"].DIRECTORY_ENTRY_EXPORT.symbols:
+            if not symbol.name:
+                continue
+            sym_addr = pe_addr + symbol.address
+            sym_name = "%s!%s" % (dll["filename"], symbol.name.decode("ascii"))
+            emu.symbols[sym_addr] = sym_name

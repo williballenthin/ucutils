@@ -1,0 +1,92 @@
+[build-system]
+requires = ["setuptools", "setuptools-scm"]
+build-backend = "setuptools.build_meta"
+
+
+[project]
+name = "ucutils"
+version="0.3.0"
+authors = [
+    {name = "Willi Ballenthin", email = "william.ballenthin@mandiant.com"},
+]
+description="Convenience helpers for working with the Unicorn emulator"
+readme = {file = "README.md", content-type = "text/markdown"}
+license = {file = "LICENSE"}
+requires-python = ">=3.8"
+keywords = ["malware analysis", "reverse engineering", "emulation", "disassembly"]
+classifiers = [
+    "License :: OSI Approved :: Apache Software License",
+    "Programming Language :: Python :: 3",
+    "Topic :: Security",
+]
+dependencies = [
+    # ---------------------------------------
+    # As a library, we use lower version bounds
+    # when specifying its dependencies. This lets
+    # other programs find a compatible set of 
+    # dependency versions.
+    #
+    # We can optionally pin to specific versions or
+    # limit the upper bound when there's a good reason;
+    # but the default is to assume all greater versions
+    # probably work until proven otherwise.
+    #
+    # The following link provides good background:
+    # https://iscinumpy.dev/post/bound-version-constraints/
+    #
+    # When we develop this library, and when we distribute it as
+    # a standalone binary, we'll use specific versions
+    # that are pinned in requirements.txt.
+    # But the requirements for a library are specified here
+    # and are looser.
+    #
+    # Related discussions:
+    # 
+    #   - https://github.com/mandiant/capa/issues/2053
+    #   - https://github.com/mandiant/capa/pull/2059
+    #   - https://github.com/mandiant/capa/pull/2079
+    #
+    # ---------------------------------------
+    # The following dependency versions were imported
+    # during September 2024 by truncating specific versions to
+    # their major-most version (major version when possible, 
+    # or minor otherwise).
+    # As specific constraints are identified, please provide
+    # comments and context.
+
+    "hexdump>=3.3",
+    "unicorn>=2.0.1.post1",
+    "capstone>=5",
+    "pefile>=2024.08.26",
+    # for unicorn
+    "setuptools>=74",
+]
+
+[tool.setuptools.packages.find]
+include = ["ucutils*"]
+namespaces = false
+
+[project.optional-dependencies]
+# Dev and build dependencies are not relaxed because
+# we want all developer environments to be consistent.
+# These dependencies are not used in production environments
+# and should not conflict with other libraries/tooling.
+dev = [
+    "pytest==8.2.2",
+    "pytest-sugar==1.0.0",
+    "pytest-instafail==0.5.0",
+    "pycodestyle==2.12.0",
+    "black==24.4.2",
+    "isort==5.13.2",  # last version supporting Python 3.7
+    "mypy==1.10.0",
+    "types-setuptools==70.0.0.20240524",
+]
+build = [
+    "setuptools==70.0.0",
+    "build==1.2.1"
+]
+
+[project.urls]
+Homepage = "https://github.com/williballenthin/ucutils"
+Repository = "https://github.com/williballenthin/ucutils.git"
+

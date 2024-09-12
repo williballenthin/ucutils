@@ -3,7 +3,7 @@ import logging
 import ucutils
 import ucutils.arch
 import ucutils.plat.win as ucwin
-from ucutils.plat.win import *  # noqa: F403
+from ucutils.plat.win import *  # noqa: F403, F401
 
 logger = logging.getLogger(__name__)
 

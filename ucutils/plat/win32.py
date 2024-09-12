@@ -1,6 +1,7 @@
 import logging
 
 import ucutils
+from ucutils.plat.win import *
 import ucutils.plat.win as ucwin
 
 logger = logging.getLogger(__name__)

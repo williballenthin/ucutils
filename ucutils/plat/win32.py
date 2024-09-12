@@ -1,8 +1,9 @@
 import logging
 
 import ucutils
-from ucutils.plat.win import *
+import ucutils.arch
 import ucutils.plat.win as ucwin
+from ucutils.plat.win import *  # noqa: F403
 
 logger = logging.getLogger(__name__)
 

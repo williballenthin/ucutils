@@ -66,19 +66,10 @@ assert emu.rax == 0x0
 assert emu.rbx == 0x0
 ```
 
-Install TEB and PEB for Windows process emulation (useful for shellcode):
+Install TEB and PEB for Windows process emulation (useful for tracing shellcode), and then load a PE file:
 ```python
-# Thread Environment Block (TEB)
-teb_addr = ucutils.plat.win64.map_teb(emu)
+ucutils.plat.win64.map_teb(emu)
 
-# Process Environment Block (PEB)
-peb_addr = ucutils.plat.win64.map_peb(emu)
-
-ucutils.arch.x64.set_fs(emu, teb_addr)
-```
-
-Load a PE file:
-```python
 pe = pefile.PE(data=b"MZ...")
 ucutils.plat.win.load_dll(emu, {"filename": "payload.dll", "pe": pe})
 

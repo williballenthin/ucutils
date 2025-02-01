@@ -190,13 +190,14 @@ class Emulator(unicorn.Uc):
     def stepi(self):
         self.arch.emu_stepi(self)
 
-    def push(self, val):
+    def push(self, val: int):
         self.stack_pointer -= self.ptr_size
         self.arch.emit_ptr(self, self.stack_pointer, val)
 
-    def pop(self):
-        _ = self.arch.parse_ptr(self, self.stack_pointer)
+    def pop(self) -> int:
+        r = self.arch.parse_ptr(self, self.stack_pointer)
         self.stack_pointer += self.ptr_size
+        return r
 
     def __getattr__(self, k):
         """

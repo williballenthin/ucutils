@@ -4,7 +4,7 @@ import logging
 import functools
 import contextlib
 import collections
-from typing import Dict
+from typing import Any
 
 import unicorn
 
@@ -22,7 +22,7 @@ logger = logging.getLogger(__name__)
 class MemoryAccessor:
     def __init__(self, emu):
         self.emu = emu
-        self.symbols: Dict[int, str] = {}
+        self.symbols: dict[int, str] = {}
 
     def __getitem__(self, key):
         if isinstance(key, slice):
@@ -76,7 +76,6 @@ class MemoryAccessor:
         self.symbols[addr] = reason
 
 
-
 @unicorn.ucsubclass
 class Emulator(unicorn.Uc):
     """
@@ -110,7 +109,7 @@ class Emulator(unicorn.Uc):
 
         # public.
         # mapping from address to symbolic name
-        self.symbols = {}
+        self.symbols: dict[int, str] = {}
 
         # public.
         self.is64 = mode_const == unicorn.UC_MODE_64
@@ -125,9 +124,9 @@ class Emulator(unicorn.Uc):
         # mapping from hook type to list of handlers.
         # we install a convenient handler that dispatches to each of the registered handlers
         #  (which are grouped by hook_type).
-        self._hooks = collections.defaultdict(lambda: [])
+        self._hooks: dict[int, Any] = collections.defaultdict(lambda: [])
         # mapping from hook type to the handle representing that low level dispatch handler.
-        self._handles = {}
+        self._handles: dict[int, int] = {}
 
         self._scratch = None
 
@@ -145,6 +144,7 @@ class Emulator(unicorn.Uc):
     def dis(self):
         if self._dis is None:
             self._dis = self.arch.get_capstone()
+            assert self._dis is not None
             self._dis.detail = True
         return self._dis
 

@@ -76,6 +76,8 @@ class MemoryAccessor:
         self.symbols[addr] = reason
 
 
+
+@unicorn.ucsubclass
 class Emulator(unicorn.Uc):
     """
     enhancements:
@@ -96,11 +98,12 @@ class Emulator(unicorn.Uc):
         emu.hook_add(unicorn.UC_HOOK_CODE, lambda *args: logger.debug('%s', args))
     """
 
-    def __init__(self, arch_const, mode_const, plat=None, *args, **kwargs):
+    def __init__(self, arch_const: int, mode_const: int, plat=None, *args, **kwargs):
         # must be set before super called, because its referenced in getattr
-        self.arch = ucutils.arch.get_arch(arch_const, mode_const)
 
-        super(Emulator, self).__init__(arch_const, mode_const, *args, **kwargs)
+        super().__init__(arch_const, mode_const, *args, **kwargs)
+
+        self.arch = ucutils.arch.get_arch(arch_const, mode_const)
 
         # public.
         self.mem = MemoryAccessor(self)
@@ -167,7 +170,7 @@ class Emulator(unicorn.Uc):
         self._hooks[hook_type].append(fn)
         if was_empty:
             handler = functools.partial(self._handle_hook, hook_type)
-            super(Emulator, self).hook_add(hook_type, handler)
+            super().hook_add(hook_type, handler)
 
     def hook_del(self, fn):
         if isinstance(fn, int):
@@ -182,7 +185,7 @@ class Emulator(unicorn.Uc):
                 pass
             else:
                 if not hook_list:
-                    super(Emulator, self).hook_del(hook_type)
+                    super().hook_del(hook_type)
 
     def go(self, addr):
         self.arch.emu_go(self, addr)
@@ -247,7 +250,7 @@ class Emulator(unicorn.Uc):
             if c is not None:
                 return self.reg_write(c, v)
 
-        return super(Emulator, self).__setattr__(k, v)
+        return super().__setattr__(k, v)
 
 
 class Hook:

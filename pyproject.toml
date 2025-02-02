@@ -55,7 +55,7 @@ dependencies = [
     # comments and context.
 
     "hexdump>=3.3",
-    "unicorn>=2.0.1.post1",
+    "unicorn==2.1.1",
     "capstone>=5",
     "pefile>=2024.08.26",
     # for unicorn

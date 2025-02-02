@@ -7,11 +7,11 @@ build-backend = "setuptools.build_meta"
 name = "ucutils"
 version="0.3.0"
 authors = [
-    {name = "Willi Ballenthin", email = "william.ballenthin@mandiant.com"},
+    {name = "Willi Ballenthin", email = "wballenthin@google.com"},
 ]
 description="Convenience helpers for working with the Unicorn emulator"
-readme = {file = "README.md", content-type = "text/markdown"}
-license = {file = "LICENSE"}
+readme = {file = "readme.md", content-type = "text/markdown"}
+license = {file = "LICENSE.txt"}
 requires-python = ">=3.8"
 keywords = ["malware analysis", "reverse engineering", "emulation", "disassembly"]
 classifiers = [
@@ -72,18 +72,18 @@ namespaces = false
 # These dependencies are not used in production environments
 # and should not conflict with other libraries/tooling.
 dev = [
-    "pytest==8.2.2",
-    "pytest-sugar==1.0.0",
-    "pytest-instafail==0.5.0",
-    "pycodestyle==2.12.0",
-    "black==24.4.2",
-    "isort==5.13.2",  # last version supporting Python 3.7
-    "mypy==1.10.0",
-    "types-setuptools==70.0.0.20240524",
+    "pytest>=8.2.2",
+    "pytest-sugar>=1.0.0",
+    "pytest-instafail>=0.5.0",
+    "pycodestyle>=2.12.0",
+    "black>=24.4.2",
+    "isort>=5.13.2",  # last version supporting Python 3.7
+    "mypy>=1.10.0",
+    "types-setuptools>=70.0.0.20240524",
 ]
 build = [
-    "setuptools==70.0.0",
-    "build==1.2.1"
+    "setuptools>=74.0.0",
+    "build>=1.2.1"
 ]
 
 [project.urls]

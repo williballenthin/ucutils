@@ -10,7 +10,7 @@ import ucutils.emu
 #    0: mov rax, 0x1
 #    7: mov rbx, 0x2
 #    e: sub rbx, rax
-CODE = b"\x48\xC7\xC0\x01\x00\x00\x00\x48\xC7\xC3\x02\x00\x00\x00\x48\x29\xC3"
+CODE = b"\x48\xc7\xc0\x01\x00\x00\x00\x48\xc7\xc3\x02\x00\x00\x00\x48\x29\xc3"
 
 
 def test_read_reg():
@@ -40,7 +40,7 @@ def test_read_mem_slice():
     emu = ucutils.emu.Emulator(unicorn.UC_ARCH_X86, unicorn.UC_MODE_64)
     emu.mem_map(0x0, 0x1000)
     emu.mem_write(0x0, CODE)
-    assert emu.mem[0x0:0x2] == b"\x48\xC7"
+    assert emu.mem[0x0:0x2] == b"\x48\xc7"
 
 
 def test_read_mem_index():
@@ -66,7 +66,7 @@ def test_stepi32():
     #     a:  b8 02 00 00 00                  mov    eax,0x2
     #     f:  a3 02 20 00 00                  mov    ds:0x2002,eax
     #     14: a3 00 10 00 00                  mov    ds:0x1000,eax
-    CODE = b"\xC7\x05\x00\x10\x00\x00\x01\x00\x00\x00\xB8\x02\x00\x00\x00\xA3\x02\x20\x00\x00\xA3\x00\x10\x00\x00"
+    CODE = b"\xc7\x05\x00\x10\x00\x00\x01\x00\x00\x00\xb8\x02\x00\x00\x00\xa3\x02\x20\x00\x00\xa3\x00\x10\x00\x00"
 
     emu = ucutils.emu.Emulator(unicorn.UC_ARCH_X86, unicorn.UC_MODE_32)
     emu.mem.map_data(0x0, CODE, "code")
@@ -114,7 +114,7 @@ def test_go32():
     #     a:  b8 02 00 00 00                  mov    eax,0x2
     #     f:  a3 02 20 00 00                  mov    ds:0x2002,eax
     #     14: a3 00 10 00 00                  mov    ds:0x1000,eax
-    CODE = b"\xC7\x05\x00\x10\x00\x00\x01\x00\x00\x00\xB8\x02\x00\x00\x00\xA3\x02\x20\x00\x00\xA3\x00\x10\x00\x00"
+    CODE = b"\xc7\x05\x00\x10\x00\x00\x01\x00\x00\x00\xb8\x02\x00\x00\x00\xa3\x02\x20\x00\x00\xa3\x00\x10\x00\x00"
 
     emu = ucutils.emu.Emulator(unicorn.UC_ARCH_X86, unicorn.UC_MODE_32)
     emu.mem.map_data(0x0, CODE, "code")

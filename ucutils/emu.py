@@ -122,8 +122,12 @@ class Emulator(unicorn.Uc):
         # public.
         self.ptr_size = self.arch.get_ptr_size()
 
-        # mapping from hook type to list of handlers
+        # mapping from hook type to list of handlers.
+        # we install a convenient handler that dispatches to each of the registered handlers
+        #  (which are grouped by hook_type).
         self._hooks = collections.defaultdict(lambda: [])
+        # mapping from hook type to the handle representing that low level dispatch handler.
+        self._handles = {}
 
         self._scratch = None
 
@@ -170,7 +174,8 @@ class Emulator(unicorn.Uc):
         self._hooks[hook_type].append(fn)
         if was_empty:
             handler = functools.partial(self._handle_hook, hook_type)
-            super().hook_add(hook_type, handler)
+            handle = super().hook_add(hook_type, handler)
+            self._handles[hook_type] = handle
 
     def hook_del(self, fn):
         if isinstance(fn, int):
@@ -185,7 +190,8 @@ class Emulator(unicorn.Uc):
                 pass
             else:
                 if not hook_list:
-                    super().hook_del(hook_type)
+                    super().hook_del(self._handles[hook_type])
+                    del self._handles[hook_type]
 
     def go(self, addr):
         self.arch.emu_go(self, addr)

@@ -39,7 +39,6 @@ def emit_teb(emu, teb_addr, peb_addr):
 
 
 def parse_teb(emu, teb_addr):
-    print("parse teb: " + hex(teb_addr))
     return {
         "peb": ucutils.parse_ptr(emu, teb_addr + OFFSET_PEB),
     }
@@ -102,6 +101,7 @@ def emit_ldr_data_table_entry(
     ucwin.init_list_entry(emu, ldr_addr + 0x10)  # init order
     ucutils.emit_ptr(emu, ldr_addr + 0x18, dllbase_addr)
     ucutils.emit_ptr(emu, ldr_addr + 0x1C, entrypoint_addr)
+    ucutils.emit_uint32(emu, ldr_addr + 0x20, sizeofimage)
     emu.plat.emit_unicode(ldr_addr + 0x24, fulldllname_us)
     emu.plat.emit_unicode(ldr_addr + 0x2C, basedllname_us)
 
@@ -135,6 +135,6 @@ def append_ldr_data_entry(emu, entry_addr):
     ldr_data_addr = peb["ldr_data"]
 
     # we'll just put all these in the same order
-    append_list_entry(emu, ldr_data_addr + 0x8, entry_addr + 0x00)  # load lorder
-    append_list_entry(emu, ldr_data_addr + 0x10, entry_addr + 0x8)  # mem lorder
-    append_list_entry(emu, ldr_data_addr + 0x18, entry_addr + 0x10)  # init lorder
+    append_list_entry(emu, ldr_data_addr + OFFSET_IN_LOAD_ORDER, entry_addr + 0x00)  # load order
+    append_list_entry(emu, ldr_data_addr + OFFSET_IN_MEM_ORDER, entry_addr + 0x8)  # mem order
+    append_list_entry(emu, ldr_data_addr + OFFSET_IN_INIT_ORDER, entry_addr + 0x10)  # init order

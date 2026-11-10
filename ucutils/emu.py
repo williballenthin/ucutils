@@ -259,6 +259,18 @@ class Emulator(unicorn.Uc):
         return super().__setattr__(k, v)
 
 
+# unicorn's ucsubclass replaces __new__ with one that takes only (arch, mode),
+# so wrap it to accept the other arguments of __init__, like `plat`.
+_uc_subclass_new = Emulator.__new__
+
+
+def _emulator_new(cls, arch_const, mode_const, *args, **kwargs):
+    return _uc_subclass_new(cls, arch_const, mode_const)  # type: ignore[call-arg]
+
+
+Emulator.__new__ = _emulator_new  # type: ignore[method-assign, assignment]
+
+
 class Hook:
     """
     note: for use with `Emulator` instances, not `unicorn.Uc` instances.

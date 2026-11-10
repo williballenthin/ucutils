@@ -23,16 +23,17 @@ def parse_list_entry(emu, addr):
 
 
 def emit_unicode(emu, addr, ustring):
+    # Buffer is aligned to the pointer size: at +0x4 on x86, and +0x8 on x64.
     ucutils.emit_uint16(emu, addr + 0x0, ustring["length"])
     ucutils.emit_uint16(emu, addr + 0x2, ustring["maxlength"])
-    ucutils.emit_ptr(emu, addr + 0x4, ustring["address"])
+    ucutils.emit_ptr(emu, addr + emu.ptr_size, ustring["address"])
 
 
 def parse_unicode(emu, addr):
     u = {
         "length": ucutils.parse_uint16(emu, addr + 0x0),
         "maxlength": ucutils.parse_uint16(emu, addr + 0x2),
-        "address": ucutils.parse_ptr(emu, addr + 0x4),
+        "address": ucutils.parse_ptr(emu, addr + emu.ptr_size),
     }
 
     u["s"] = emu.mem_read(u["address"], u["length"]).decode("utf-16le")
